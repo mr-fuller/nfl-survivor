@@ -1,6 +1,18 @@
-import requests, bs4
+import requests, bs4, smtplib, json
 import pandas as pd
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
+with open('credentials.json') as creds:
+    credentials = json.load(creds)
+email_sender = credentials['email_sender']
+email_recipient = credentials['email_recipient']
+email_password = credentials['email_password']
+email_server = credentials['email_server']
+email_port = int(credentials['email_port'])
 
 year = datetime.now().year
 
@@ -37,4 +49,29 @@ nflodds_df = nflodds_df.fillna(0)
 # this should count the number of weeks remaining where the team has better than 50% win odds
 nflodds_df['Future_Value'] = nflodds_df.where(nflodds_df > 50).count(axis=1)
 # print(nflodds_df)
-print(nflodds_df[nflodds_df.iloc[:,0] > 50].sort_values('Future_Value'))
+results = nflodds_df[nflodds_df.iloc[:,0] > 50].sort_values('Future_Value') 
+print(results)
+
+# email results
+FROM = email_sender
+TO = email_recipient  
+SUBJECT = f'Survival pool report for the week of {datetime.now().strftime("%d %b %Y")}'
+# summary = "\n".join(edit_count)
+# details = ",\n ".join(edited_files)
+TEXT = results.to_html()
+# print(TEXT)
+msg = MIMEMultipart()
+msg['From'] = FROM
+msg['To'] = TO
+msg['Subject'] = SUBJECT
+msg.attach(MIMEText(TEXT, 'html'))
+
+
+#msg.attach(file)
+
+# Connect to email server and send email
+with smtplib.SMTP(email_server, email_port) as s:
+    s.starttls()
+    s.login(email_sender, email_password)
+    s.send_message(msg)
+# print("Done in " + str(datetime.now()- start) )
