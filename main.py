@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-# get credentials from local json file
+# get credentials from local file
 with open('credentials.json') as creds:
     credentials = json.load(creds)
 email_sender = credentials['email_sender']
